@@ -1,0 +1,94 @@
+#!/home/pi/lampi-venv/bin/python3
+
+import argparse
+import json
+import sys
+import logging
+import paho.mqtt.client as MQTT
+
+# Details for MQTT Broker
+BROKER = "localhost"
+PORT = 1883
+# Topics
+CONFIG = "lamp/set_config"
+CHANGED = "lamp/changed"
+
+
+def init_cmd():
+    parser = argparse.ArgumentParser(description="Control Lampi with MQTT broker")
+
+    parser.add_argument("-b", "--brightness", type=float, help="Set brightness (0.0 - 1.0)")
+    parser.add_argument("-u", "--hue", type=float, help="Set hue (0.0 - 1.0)")
+    parser.add_argument("-s", "--saturation", type=float, help="Set saturation (0.0 - 1.0)")
+    parser.add_argument("--on", action="store_true", help="Turn the lamp on")
+    parser.add_argument("--off", action="store_true", help="Turn the lamp off")
+
+    return parser
+
+def curr_state(client):
+    def on_message(client, userdata, message):
+        print("Current lamp state:", message.payload.decode())
+        client.disconnect()
+
+    client.subscribe(CHANGED)
+    client.on_message = on_message
+    client.loop_start()
+
+def publish(client, payload, topic):
+    logging.debug(f"Publishing to {topic}: {json.dumps(payload)}")
+    client.publish(topic, json.dumps(payload))
+    client.disconnect()
+
+def validate(args):
+    if args.on and args.off:
+        print("Error: You must specify either --on or --off")
+        sys.exit(1)
+    if args.brightness is not None and (args.brightness < 0.0 or args.brightness > 1.0):
+        print("Error: Brightness value must be between 0.0 and 1.0")
+        sys.exit(1)
+    if args.hue is not None and (args.hue < 0.0 or args.hue > 1.0):
+        print("Error: Hue value must be between 0.0 and 1.0")
+        sys.exit(1)
+    if args.saturation is not None and (args.saturation < 0.0 or args.saturation > 1.0):
+        print("Error: Saturation value must be between 0.0 and 1.0")
+        sys.exit(1)
+
+def make_payload(args):
+    state = {
+        'color': {'h': args.hue if args.hue is not None else 0.5,
+                  's': args.saturation if args.saturation is not None else 1.0},
+        'brightness': args.brightness if args.brightness is not None else 1.0,
+        'on': args.on if args.on else not args.off
+    }
+    return state
+
+def main():
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    parser = init_cmd()
+    args = parser.parse_args()
+
+    # Initialize MQTT broker
+    client = MQTT.Client()
+    client.connect(BROKER, PORT, 60)
+    client.enable_logger(logging.getLogger())
+
+    # Get current state of Lampi if no arguments are given in cmd line
+    if not any(vars(args).values()):
+        curr_state(client)
+        return
+
+    # Validate args of cmd input
+    validate(args)
+
+    # Make payload from args
+    state = make_payload(args)
+
+    # Publish state to set_config topic
+    publish(client, state, CONFIG)
+
+    # Subscribe to changed topic to monitor changes
+    client.subscribe(CHANGED)
+    client.loop_forever()
+
+if __name__ == "__main__":
+    main()
