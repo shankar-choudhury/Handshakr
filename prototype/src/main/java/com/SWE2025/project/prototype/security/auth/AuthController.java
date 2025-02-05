@@ -36,14 +36,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> authenticateUser(@RequestParam LoginRequest request) {
+    public ResponseEntity<String> authenticateUser(@RequestBody LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.username(),
                         request.password()));
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String token = jwtUtils.generateToken(userDetails.getUsername());
-        return ResponseEntity.ok(String.format("Authenticated with toke: %s", token));
+        return ResponseEntity.ok(String.format("Authenticated with token: %s", token));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
