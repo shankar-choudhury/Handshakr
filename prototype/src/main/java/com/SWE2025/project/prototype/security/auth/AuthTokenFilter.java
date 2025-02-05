@@ -1,4 +1,4 @@
-package com.SWE2025.project.prototype.security.auth;
+                                  package com.SWE2025.project.prototype.security.auth;
 
 import com.SWE2025.project.prototype.security.utils.JwtUtils;
 import jakarta.servlet.FilterChain;
@@ -6,6 +6,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.NonNullApi;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,8 +21,8 @@ import java.util.Optional;
 
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
-    private JwtUtils jwtUtils;
-    private UserDetailsService userDetailsService;
+    private final JwtUtils jwtUtils;
+    private final UserDetailsService userDetailsService;
 
     @Autowired
     public AuthTokenFilter(JwtUtils jwtUtils, UserDetailsService userDetailsService) {
@@ -30,11 +32,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
-            String jwt = parseJwt(request); // Now this will throw if JWT is missing
+            String jwt = parseJwt(request);
             if (jwtUtils.validateToken(jwt)) {
                 String userName = jwtUtils.getUserNameFromToken(jwt);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userName);

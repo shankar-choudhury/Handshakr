@@ -14,7 +14,7 @@ import java.util.List;
 @Table(name = "users")
 @Getter
 @Setter
-@Builder
+@Builder(builderClassName = "Builder", toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class User implements UserDetails {
@@ -52,4 +52,12 @@ public class User implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return null;
     }
+
+    @Override
+    public String getPassword() {return password;}
+
+    @Override
+    public String getUsername() {return username;}
+
+
 }

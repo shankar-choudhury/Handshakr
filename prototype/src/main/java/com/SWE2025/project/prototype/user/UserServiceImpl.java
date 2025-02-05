@@ -8,7 +8,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.SWE2025.project.prototype.user.UserException.Cause.*;
@@ -54,7 +53,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public GetUserDTO findByUsername(String username) {
-        return userRepository.findByUserName(username)
+        return userRepository.findByUsername(username)
                 .map(GetUserDTO::new)
                 .orElseThrow(() -> new UserException(USERNAME_NOT_FOUND, username));
     }
